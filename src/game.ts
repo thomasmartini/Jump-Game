@@ -1,27 +1,42 @@
 import * as PIXI from 'pixi.js'
-import fishImage from "./images/fish.png"
-import bubbleImage from "./images/bubble.png"
-import waterImage from "./images/water.jpg"
+import monkeyImage from "./images/monkey.png"
+import bgImage from "./images/background.jpg"
+import { Player } from './player'
+import { Background } from './background'
 
-//
-// STAP 1 - maak een pixi canvas
-//
-const pixi = new PIXI.Application({ width: 800, height: 450 })
-document.body.appendChild(pixi.view)
+export class Game { 
+    pixi: PIXI.Application 
+    loader:PIXI.Loader
+    player:Player
+    background:Background
 
-//
-// STAP 2 - preload alle afbeeldingen
-//
-const loader = new PIXI.Loader()
-loader.add('fishTexture', fishImage)
-      .add('bubbleTexture', bubbleImage)
-      .add('waterTexture', waterImage)
-loader.load(()=>loadCompleted())
+    public constructor() {
+        this.pixi = new PIXI.Application({resizeTo: window})
+        document.body.appendChild(this.pixi.view)
+    
+        this.loader = new PIXI.Loader()
+        this.loader
+            .add("monkeyTexture", monkeyImage)
+            .add("backgroundTexture", bgImage)
 
-//
-// STAP 3 - maak een sprite als de afbeeldingen zijn geladen
-//
-function loadCompleted() {
-    let fish = new PIXI.Sprite(loader.resources["fishTexture"].texture!)
-    pixi.stage.addChild(fish)
+        this.loader.load(() => this.loadCompleted())
+    }
+
+loadCompleted() {
+    this.addBackground()
+    this.player = new Player(this.loader.resources["monkeyTexture"].texture!)
+    this.pixi.stage.addChild(this.player)
+    this.pixi.ticker.add(() => this.update())
 }
+
+addBackground() {
+    this.background = new Background(this.loader.resources["backgroundTexture"].texture!, this.pixi.screen.width, this.pixi.screen.height)
+    this.pixi.stage.addChild(this.background)
+    console.log(window.screen.width)
+}
+
+update() {  
+        this.background.update()  
+}
+}
+new Game()
