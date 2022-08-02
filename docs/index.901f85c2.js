@@ -523,16 +523,25 @@ var _monkeyPng = require("./images/monkey.png");
 var _monkeyPngDefault = parcelHelpers.interopDefault(_monkeyPng);
 var _backgroundJpg = require("./images/background.jpg");
 var _backgroundJpgDefault = parcelHelpers.interopDefault(_backgroundJpg);
+var _groundPng = require("./images/ground.png");
+var _groundPngDefault = parcelHelpers.interopDefault(_groundPng);
+var _treetrunkPng = require("./images/treetrunk.png");
+var _treetrunkPngDefault = parcelHelpers.interopDefault(_treetrunkPng);
 var _player = require("./player");
 var _background = require("./background");
+var _ground = require("./ground");
+var _obstacles = require("./obstacles");
 class Game {
+    obstacles = [];
+    obstacleTimer = 0;
     constructor(){
         this.pixi = new _pixiJs.Application({
             resizeTo: window
         });
         document.body.appendChild(this.pixi.view);
+        this.collide = false;
         this.loader = new _pixiJs.Loader();
-        this.loader.add("monkeyTexture", _monkeyPngDefault.default).add("backgroundTexture", _backgroundJpgDefault.default);
+        this.loader.add("backgroundTexture", _backgroundJpgDefault.default).add("monkeyTexture", _monkeyPngDefault.default).add("groundTexture", _groundPngDefault.default).add("obstacleTexture", _treetrunkPngDefault.default);
         this.loader.load(()=>this.loadCompleted()
         );
     }
@@ -542,19 +551,47 @@ class Game {
         this.pixi.stage.addChild(this.player);
         this.pixi.ticker.add(()=>this.update()
         );
+        this.ground = new _ground.Ground(this.loader.resources["groundTexture"].texture);
+        this.pixi.stage.addChild(this.ground);
+        let obstacle = new _obstacles.Obstacle(this.loader.resources["obstacleTexture"].texture);
+        this.obstacles.push(obstacle);
+        this.pixi.stage.addChild(obstacle);
+    }
+    createObstacle() {
+        let obstacle = new _obstacles.Obstacle(this.loader.resources["obstacleTexture"].texture);
+        this.obstacles.push(obstacle);
+        this.pixi.stage.addChild(obstacle);
+    }
+    update() {
+        this.background.update();
+        this.ground.update();
+        this.player.update(this.collide);
+        for (let obstacle of this.obstacles)obstacle.update();
+        if (this.obstacleTimer == 400) {
+            this.createObstacle();
+            this.obstacleTimer = 0;
+        }
+        this.colissionChecker();
+        this.obstacleTimer++;
     }
     addBackground() {
         this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixi.screen.width, this.pixi.screen.height);
         this.pixi.stage.addChild(this.background);
-        console.log(window.screen.width);
     }
-    update() {
-        this.background.update();
+    colissionChecker() {
+        if (this.collision(this.ground, this.player)) this.collide = true;
+        else this.collide = false;
+        for (let obstacle of this.obstacles)if (this.collision(obstacle, this.player)) this.pixi.stop();
+    }
+    collision(sprite1, sprite2) {
+        const bounds1 = sprite1.getBounds();
+        const bounds2 = sprite2.getBounds();
+        return bounds1.x < bounds2.x + bounds2.width && bounds1.x + bounds1.width > bounds2.x && bounds1.y < bounds2.y + bounds2.height && bounds1.y + bounds1.height > bounds2.y;
     }
 }
 new Game();
 
-},{"pixi.js":"dsYej","./images/monkey.png":"5zA6A","./images/background.jpg":"1wZMB","./player":"6OTSH","./background":"6FKGH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","./images/monkey.png":"5zA6A","./images/background.jpg":"1wZMB","./images/ground.png":"lpdmr","./images/treetrunk.png":"kngt9","./player":"6OTSH","./background":"6FKGH","./ground":"5uyfC","./obstacles":"gNRHk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37091,6 +37128,12 @@ exports.getOrigin = getOrigin;
 },{}],"1wZMB":[function(require,module,exports) {
 module.exports = require('./helpers/bundle-url').getBundleURL('emE5o') + "background.527e578f.jpg" + "?" + Date.now();
 
+},{"./helpers/bundle-url":"lgJ39"}],"lpdmr":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('emE5o') + "ground.2b2f9782.png" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"kngt9":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('emE5o') + "treetrunk.bdc413ee.png" + "?" + Date.now();
+
 },{"./helpers/bundle-url":"lgJ39"}],"6OTSH":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -37098,10 +37141,32 @@ parcelHelpers.export(exports, "Player", ()=>Player
 );
 var _pixiJs = require("pixi.js");
 class Player extends _pixiJs.Sprite {
+    fallSpeed = 0.1;
+    xspeed = 0;
+    keyPressed = false;
     constructor(texture){
         super(texture);
         this.width = 300;
         this.height = 200;
+        this.x = screen.width / 1.5;
+        window.addEventListener("keydown", (e)=>this.checkSpace(e)
+        );
+        window.addEventListener("keyup", (e)=>this.releaseSpace(e)
+        );
+    }
+    update(collide) {
+        this.x += this.xspeed;
+        this.y += this.fallSpeed;
+        if (collide) {
+            this.fallSpeed = 0;
+            if (collide && this.keyPressed) this.y -= 400;
+        } else this.fallSpeed += 0.05;
+    }
+    checkSpace(e) {
+        if (e.key === " " && !this.keyPressed) this.keyPressed = true;
+    }
+    releaseSpace(e) {
+        if (e.key === " ") this.keyPressed = false;
     }
 }
 
@@ -37116,7 +37181,42 @@ class Background extends _pixiJs.TilingSprite {
         super(texture, w, h);
     }
     update() {
-        this.tilePosition.x -= 3;
+        this.tilePosition.x += 3;
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5uyfC":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Ground", ()=>Ground
+);
+var _pixiJs = require("pixi.js");
+class Ground extends _pixiJs.TilingSprite {
+    constructor(texture){
+        super(texture);
+        this.width = window.screen.width;
+        this.height = 160;
+        this.y = window.screen.height - this.height;
+    }
+    update() {
+        this.tilePosition.x += 3;
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gNRHk":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Obstacle", ()=>Obstacle
+);
+var _pixiJs = require("pixi.js");
+class Obstacle extends _pixiJs.Sprite {
+    constructor(texture){
+        super(texture);
+        this.x = -200;
+        this.y = 670;
+    }
+    update() {
+        this.x += 3;
     }
 }
 
