@@ -8,6 +8,6 @@ export class Background extends PIXI.TilingSprite {
     }
 
     public update() {
-        this.tilePosition.x += 3
+        this.tilePosition.x += 5
     }
 }

@@ -531,6 +531,7 @@ var _player = require("./player");
 var _background = require("./background");
 var _ground = require("./ground");
 var _obstacles = require("./obstacles");
+var _ui = require("./ui");
 class Game {
     obstacles = [];
     obstacleTimer = 0;
@@ -549,30 +550,43 @@ class Game {
         this.addBackground();
         this.player = new _player.Player(this.loader.resources["monkeyTexture"].texture);
         this.pixi.stage.addChild(this.player);
-        this.pixi.ticker.add(()=>this.update()
-        );
         this.ground = new _ground.Ground(this.loader.resources["groundTexture"].texture);
         this.pixi.stage.addChild(this.ground);
         let obstacle = new _obstacles.Obstacle(this.loader.resources["obstacleTexture"].texture);
         this.obstacles.push(obstacle);
         this.pixi.stage.addChild(obstacle);
-    }
-    createObstacle() {
-        let obstacle = new _obstacles.Obstacle(this.loader.resources["obstacleTexture"].texture);
-        this.obstacles.push(obstacle);
-        this.pixi.stage.addChild(obstacle);
+        this.interface = new _ui.UI();
+        this.pixi.stage.addChild(this.interface);
+        this.pixi.ticker.add(()=>this.update()
+        );
     }
     update() {
         this.background.update();
         this.ground.update();
         this.player.update(this.collide);
-        for (let obstacle of this.obstacles)obstacle.update();
+        for (let obstacle of this.obstacles){
+            obstacle.update();
+            if (obstacle.x > screen.width) {
+                this.deleteObstacle(obstacle);
+                console.log(this.obstacles);
+            }
+        }
         if (this.obstacleTimer == 400) {
             this.createObstacle();
             this.obstacleTimer = 0;
         }
         this.colissionChecker();
         this.obstacleTimer++;
+    }
+    createObstacle() {
+        let obstacle = new _obstacles.Obstacle(this.loader.resources["obstacleTexture"].texture);
+        this.obstacles.push(obstacle);
+        this.pixi.stage.addChild(obstacle);
+    }
+    deleteObstacle(obstacle) {
+        this.obstacles = this.obstacles.filter((f)=>f != obstacle
+        );
+        obstacle.destroy();
     }
     addBackground() {
         this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixi.screen.width, this.pixi.screen.height);
@@ -581,7 +595,10 @@ class Game {
     colissionChecker() {
         if (this.collision(this.ground, this.player)) this.collide = true;
         else this.collide = false;
-        for (let obstacle of this.obstacles)if (this.collision(obstacle, this.player)) this.pixi.stop();
+        for (let obstacle of this.obstacles){
+            if (obstacle.x == this.player.x) this.interface.addScore(10);
+            if (this.collision(obstacle, this.player)) this.pixi.stop();
+        }
     }
     collision(sprite1, sprite2) {
         const bounds1 = sprite1.getBounds();
@@ -591,7 +608,7 @@ class Game {
 }
 new Game();
 
-},{"pixi.js":"dsYej","./images/monkey.png":"5zA6A","./images/background.jpg":"1wZMB","./images/ground.png":"lpdmr","./images/treetrunk.png":"kngt9","./player":"6OTSH","./background":"6FKGH","./ground":"5uyfC","./obstacles":"gNRHk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","./images/monkey.png":"5zA6A","./images/background.jpg":"1wZMB","./images/ground.png":"lpdmr","./images/treetrunk.png":"kngt9","./player":"6OTSH","./background":"6FKGH","./ground":"5uyfC","./obstacles":"gNRHk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./ui":"iGTI0"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37181,7 +37198,7 @@ class Background extends _pixiJs.TilingSprite {
         super(texture, w, h);
     }
     update() {
-        this.tilePosition.x += 3;
+        this.tilePosition.x += 5;
     }
 }
 
@@ -37199,7 +37216,7 @@ class Ground extends _pixiJs.TilingSprite {
         this.y = window.screen.height - this.height;
     }
     update() {
-        this.tilePosition.x += 3;
+        this.tilePosition.x += 5;
     }
 }
 
@@ -37213,10 +37230,41 @@ class Obstacle extends _pixiJs.Sprite {
     constructor(texture){
         super(texture);
         this.x = -200;
-        this.y = 670;
+        this.y = 800;
+        this.width = 100;
+        this.height = 150;
     }
     update() {
-        this.x += 3;
+        this.x += 5;
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iGTI0":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "UI", ()=>UI
+);
+var _pixiJs = require("pixi.js");
+class UI extends _pixiJs.Container {
+    score = 0;
+    constructor(){
+        super();
+        const style = new _pixiJs.TextStyle({
+            fontFamily: 'ArcadeFont',
+            fontSize: 40,
+            fontWeight: 'bold',
+            fill: [
+                '#ffffff'
+            ]
+        });
+        this.scoreField = new _pixiJs.Text(`Score : 0`, style);
+        this.addChild(this.scoreField);
+        this.scoreField.x = 10;
+        this.scoreField.y = 10;
+    }
+    addScore(n) {
+        this.score += n;
+        this.scoreField.text = `Score : ${this.score}`;
     }
 }
 

@@ -26,8 +26,7 @@ export class Player extends PIXI.Sprite {
     }
 }
 private checkSpace(e:KeyboardEvent) {
-    if(e.key === " " && !this.keyPressed) {
-        
+    if(e.key === " " && !this.keyPressed) {     
         this.keyPressed = true
     }
 }

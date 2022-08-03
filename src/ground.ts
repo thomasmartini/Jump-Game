@@ -8,6 +8,6 @@ export class Ground extends PIXI.TilingSprite{
         this.y = window.screen.height - this.height
     }
     update(){
-        this.tilePosition.x += 3
+        this.tilePosition.x += 5
     }
 }

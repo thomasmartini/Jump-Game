@@ -7,6 +7,7 @@ import { Player } from './player'
 import { Background } from './background'
 import { Ground } from './ground'
 import { Obstacle } from './obstacles'
+import { UI } from './ui'
 
 export class Game { 
     pixi: PIXI.Application 
@@ -17,6 +18,7 @@ export class Game {
     obstacles: Obstacle[] = []
     collide: boolean
     obstacleTimer: number = 0
+    interface: UI
 
     public constructor() {
         
@@ -39,20 +41,18 @@ loadCompleted() {
 
     this.player = new Player(this.loader.resources["monkeyTexture"].texture!)
     this.pixi.stage.addChild(this.player)
-    this.pixi.ticker.add(() => this.update())
-
+    
     this.ground = new Ground(this.loader.resources["groundTexture"].texture!)
     this.pixi.stage.addChild(this.ground)
 
     let obstacle = new Obstacle(this.loader.resources["obstacleTexture"].texture!)
     this.obstacles.push(obstacle)
     this.pixi.stage.addChild(obstacle)
-}
 
-createObstacle(){
-    let obstacle = new Obstacle(this.loader.resources["obstacleTexture"].texture!)
-    this.obstacles.push(obstacle)
-    this.pixi.stage.addChild(obstacle)
+    this.interface = new UI()
+    this.pixi.stage.addChild(this.interface)
+
+    this.pixi.ticker.add(() => this.update())
 }
 
 update() {  
@@ -61,6 +61,10 @@ update() {
     this.player.update(this.collide)
     for(let obstacle of this.obstacles ){
         obstacle.update()
+        if(obstacle.x > screen.width){
+            this.deleteObstacle(obstacle)
+            console.log(this.obstacles)
+        }
     }
     if(this.obstacleTimer == 400){
         this.createObstacle()
@@ -68,6 +72,17 @@ update() {
     }
     this.colissionChecker()
     this.obstacleTimer++
+}
+
+createObstacle(){
+    let obstacle = new Obstacle(this.loader.resources["obstacleTexture"].texture!)
+    this.obstacles.push(obstacle)
+    this.pixi.stage.addChild(obstacle)
+}
+
+deleteObstacle(obstacle: Obstacle){
+    this.obstacles = this.obstacles.filter(f => f != obstacle)
+    obstacle.destroy()
 }
 
 addBackground() {
@@ -82,6 +97,9 @@ colissionChecker(){
         this.collide = false
     }
     for(let obstacle of this.obstacles){
+        if(obstacle.x == this.player.x){
+            this.interface.addScore(10)
+        }
         if(this.collision(obstacle, this.player)){
             this.pixi.stop()
         }
