@@ -4,7 +4,7 @@ export class Player extends PIXI.Sprite {
     fallSpeed = 0.1
     xspeed = 0
     keyPressed = false
-    constructor(texture: PIXI.Texture){
+    public constructor(texture: PIXI.Texture){
         super(texture)
         this.width = 300
         this.height = 200

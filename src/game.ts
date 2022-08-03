@@ -36,7 +36,7 @@ export class Game {
         this.loader.load(() => this.loadCompleted())
     }
 
-loadCompleted() {
+private loadCompleted() {
     this.addBackground()
 
     this.player = new Player(this.loader.resources["monkeyTexture"].texture!)
@@ -55,7 +55,7 @@ loadCompleted() {
     this.pixi.ticker.add(() => this.update())
 }
 
-update() {  
+private update() {  
     this.background.update()  
     this.ground.update()
     this.player.update(this.collide)
@@ -74,23 +74,23 @@ update() {
     this.obstacleTimer++
 }
 
-createObstacle(){
+private createObstacle(){
     let obstacle = new Obstacle(this.loader.resources["obstacleTexture"].texture!)
     this.obstacles.push(obstacle)
     this.pixi.stage.addChild(obstacle)
 }
 
-deleteObstacle(obstacle: Obstacle){
+private deleteObstacle(obstacle: Obstacle){
     this.obstacles = this.obstacles.filter(f => f != obstacle)
     obstacle.destroy()
 }
 
-addBackground() {
+private addBackground() {
     this.background = new Background(this.loader.resources["backgroundTexture"].texture!, this.pixi.screen.width, this.pixi.screen.height)
     this.pixi.stage.addChild(this.background)
 }
 
-colissionChecker(){
+private colissionChecker(){
     if(this.collision(this.ground, this.player)){
         this.collide = true
     }else{
@@ -107,7 +107,7 @@ colissionChecker(){
     
 }
 
-collision(sprite1:PIXI.Sprite, sprite2:PIXI.Sprite) {
+private collision(sprite1:PIXI.Sprite, sprite2:PIXI.Sprite) {
     const bounds1 = sprite1.getBounds()
     const bounds2 = sprite2.getBounds()
 
